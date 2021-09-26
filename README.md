@@ -1,5 +1,4 @@
 # Scape_to_database
-# Aliexpress Scraper
 
 ## Table of contents
 * Introduction
