@@ -1,6 +1,7 @@
 import requests
 from bs4 import BeautifulSoup
 import pandas as pd
+import time
 
 def scrape(keyword_to_scrape:str,number_of_items_to_scrape:int):
     """
@@ -31,10 +32,21 @@ def scrape(keyword_to_scrape:str,number_of_items_to_scrape:int):
      # details of the information from the website
     for urls in page_url:
     
-      response = requests.get(urls)
-      print(response.status_code)
-      if response.status_code == 200:
-        soup = BeautifulSoup(response.content, 'html.parser')
+      page = ''
+      while page == '':
+        try:
+          page = requests.get(urls)
+          break
+        except:
+          print("Connection refused by the server..")
+          print("Let me sleep for 5 seconds")
+          print("ZZzzzz...")
+          time.sleep(5)
+          print("Was a nice sleep, now let me continue...")
+          continue
+      print(page.status_code)
+      if page.status_code == 200:
+        soup = BeautifulSoup(page.content, 'html.parser')
 
 
         for items in soup.find_all("li", {"class":"s-item"})[2:-2]:

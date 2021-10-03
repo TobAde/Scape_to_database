@@ -83,12 +83,15 @@ class Database:
         tuples = [tuple(x) for x in new_df.to_numpy()]
         cols = ','.join(list(new_df.columns))
         insert_query = "INSERT INTO product (%s) VALUES(%%s,%%s,%%s,%%s,%%s)" % (cols)
+        
+        
         print('Inserting data to products table..')
 
         try:
             extras.execute_batch(self.__cur, insert_query, tuples)
             self.__conn.commit()
-            print(f'Insert completed. {len(my_df)} records were inserted.')
+            count_query = self.__cur.execute("SELECT count(*) from product where cat_id = (%s)", (cat_id,))
+            print(f'Insert completed. {count_query} records were inserted.')
         except psycopg2.DatabaseError as error:
             print("Error: %s" % error)
             self.__conn.rollback()
@@ -128,12 +131,12 @@ class Database:
         :return: Dataframe of item data
         '''
         select_query = '''
-        select product.id, category, item_title Title, item_price Price, item_url Item_url, item_image Image_url from product 
+        select category, item_title Title, item_price Price, item_url Item_url, item_image Image_url from product 
         LEFT JOIN categories on product.cat_id = categories.id
         WHERE LOWER(category) = '%s'
         ''' % (item.lower(),)
         self.__cur.execute(select_query)
-        item_df = pd.DataFrame(self.__cur.fetchall(), columns= ('S/N','Category', 'Title', 'Price','Item_url', 'Image_url'))
+        item_df = pd.DataFrame(self.__cur.fetchall(), columns= ('Category', 'Title', 'Price','Item_url', 'Image_url'))
         return item_df
 
     def to_csv(self, df: pd.DataFrame, file_name: str) -> None:
@@ -143,5 +146,7 @@ class Database:
         :param file_name: name of csv file
         :return: none
         '''
-        df.to_csv(f'db_{file_name}.csv', index=False)
+        df.to_csv(f'db_{file_name}.csv')
         print(f'db_{file_name}.csv file saved to folder')
+        self.__cur.close()
+        self.__conn.close()
